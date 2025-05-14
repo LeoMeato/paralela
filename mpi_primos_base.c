@@ -18,16 +18,27 @@ int main(int argc, char *argv[]) {
 	long int i, n;
 	int meu_ranque, num_procs, inicio, salto;
 
-	if (argc < 2) {
-        	printf("Valor inválido! Entre com um valor do maior inteiro\n");
-       	 	return 0;
-    	} else {
-        	n = strtol(argv[1], (char **) NULL, 10);
-       	}
+	n = strtol(argv[1], (char **) NULL, 10);
 
 	MPI_Init(&argc, &argv);
 	MPI_Comm_rank(MPI_COMM_WORLD, &meu_ranque);
 	MPI_Comm_size(MPI_COMM_WORLD, &num_procs);	
+
+	// Tratamento de erro de input não estava funcionando. Botei pra baixo pra poder usar meu_ranque e consertei.
+	// Acrescentei também que 0 e 1 são valores válidos, cujo resultado é 0.
+
+	if (n < 2) {
+		if (meu_ranque == 0) {
+			if (n < 0) {
+				printf("Valor inválido! Entre com um valor do maior inteiro\n");
+			} else {
+				printf("Quant. de primos entre 1 e n: 0 \n");
+			}
+		} 
+		MPI_Finalize();
+		return 0;
+	}
+
     t_inicial = MPI_Wtime();
     inicio = 3 + meu_ranque*2;
     salto = num_procs*2;
