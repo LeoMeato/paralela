@@ -38,7 +38,7 @@ MPI_Status estado;
     t_inicial = MPI_Wtime();
 /* Envia pedaços com TAMANHO números para cada processo */
     if (meu_ranque == 0) { 
-        for (dest=1, inicio=3; dest < num_procs && inicio < n; dest++, inicio += TAMANHO) {
+        for (dest=1, inicio=3; dest < num_procs; dest++, inicio += TAMANHO) {     // tirei a condição inicio < n para não deixar os processos desnecessários em starvation. Eles recebem um numero que sabem que é inútil e só retornam 0.
             MPI_Send(&inicio, 1, MPI_INT, dest, tag, MPI_COMM_WORLD);
         }
 /* Fica recebendo as contagens parciais de cada processo */
@@ -60,7 +60,7 @@ MPI_Status estado;
         while (estado.MPI_TAG != 99) {
             MPI_Recv(&inicio, 1, MPI_INT, raiz, MPI_ANY_TAG, MPI_COMM_WORLD, &estado);
             if (estado.MPI_TAG != 99) {
-                for (i = inicio, cont=0; i < (inicio + TAMANHO) && i < n; i+=2) 
+                for (i = inicio, cont=0; i < (inicio + TAMANHO) && i <= n; i+=2) // mudei i < n para i <= n para incluir o número n também
 		            if (primo(i) == 1)
                         cont++;
 /* Envia a contagem parcial para o processo mestre */
