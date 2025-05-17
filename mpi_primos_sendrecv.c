@@ -36,8 +36,7 @@ int main(int argc, char *argv[])
 	MPI_Comm_rank(MPI_COMM_WORLD, &meu_ranque);
 	MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 
-	// Tratamento de erro de input não estava funcionando. Botei pra baixo pra poder usar meu_ranque e consertei.
-	// Acrescentei também que 0 e 1 são valores válidos, cujo resultado é 0.
+	// Acrescentei tratamento para 0 e 1 serem aceitos e darem 0, mas valores negativos serem inválidos.
 
 	if (n < 2)
 	{
@@ -45,7 +44,7 @@ int main(int argc, char *argv[])
 		{
 			if (n < 0)
 			{
-				printf("Valor inválido! Entre com um valor do maior inteiro\n");
+				printf("Números negativos não podem ser primos! Entre com um valor do maior inteiro positivo\n");
 			}
 			else
 			{

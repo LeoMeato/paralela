@@ -31,6 +31,26 @@ MPI_Request pedido_recebe;
 	MPI_Init(&argc, &argv);
 	MPI_Comm_rank(MPI_COMM_WORLD, &meu_ranque);
 	MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
+
+	// Acrescentei tratamento para 0 e 1 serem aceitos e darem 0, mas valores negativos serem inválidos.
+
+	if (n < 2)
+	{
+		if (meu_ranque == 0)
+		{
+			if (n < 0)
+			{
+				printf("Números negativos não podem ser primos! Entre com um valor do maior inteiro positivo\n");
+			}
+			else
+			{
+				printf("Quant. de primos entre 1 e n: 0 \n");
+			}
+		}
+		MPI_Finalize();
+		return 0;
+	}
+
 /* Se houver menos que dois processos aborta */
     if (num_procs < 2) {
         printf("Este programa deve ser executado com no mínimo dois processos.\n");
