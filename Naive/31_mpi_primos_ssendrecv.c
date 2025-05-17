@@ -21,8 +21,6 @@ int main(int argc, char *argv[])
 	int cont = 0, total = 0, parcial = 0, etiq = 0;
 	long int i, n;
 	int meu_ranque, num_procs, inicio, salto;
-	void *buffer;
-	int tam_buffer;
 
 	if (argc < 2)
 	{
@@ -37,7 +35,6 @@ int main(int argc, char *argv[])
 	MPI_Init(&argc, &argv);
 	MPI_Comm_rank(MPI_COMM_WORLD, &meu_ranque);
 	MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
-	MPI_Request pedido_recebe;
 
 	// Acrescentei tratamento para 0 e 1 serem aceitos e darem 0, mas valores negativos serem inválidos.
 
@@ -71,19 +68,16 @@ int main(int argc, char *argv[])
 	{
 		if (meu_ranque != 0)
 		{
-			MPI_Pack_size(1, MPI_INT, MPI_COMM_WORLD, &tam_buffer);
-			tam_buffer = tam_buffer + MPI_BSEND_OVERHEAD;
-			buffer = (void *)malloc(tam_buffer);
-			MPI_Buffer_attach(buffer, tam_buffer);
-			MPI_Bsend(&cont, 1, MPI_INT, 0, etiq, MPI_COMM_WORLD);
+			// Processos enviam cont para o processo 0, que esperam o inicio do recebimento (bloqueante)
+			MPI_Ssend(&cont, 1, MPI_INT, 0, etiq, MPI_COMM_WORLD);
 		}
 		else
 		{
 			total = cont;
 			for (int i = 1; i < num_procs; i++)
 			{
-				MPI_Irecv(&parcial, 1, MPI_INT, i, etiq, MPI_COMM_WORLD, &pedido_recebe);
-				MPI_Wait(&pedido_recebe, MPI_STATUS_IGNORE);
+				// Processo 0 recebe cont dos outros processos (bloqueante)
+				MPI_Recv(&parcial, 1, MPI_INT, i, etiq, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 				total += parcial;
 			}
 		}

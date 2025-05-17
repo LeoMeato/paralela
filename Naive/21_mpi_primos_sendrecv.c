@@ -18,7 +18,7 @@ int primo(long int n)
 int main(int argc, char *argv[])
 {
 	double t_inicial, t_final;
-	int cont = 0, total = 0, parcial = 0, etiq = 0;
+	int cont = 0, total = 0, parcial = 0, etiq = 0; // Agora precisamos de parcial para receber o valor de cont
 	long int i, n;
 	int meu_ranque, num_procs, inicio, salto;
 
@@ -35,7 +35,6 @@ int main(int argc, char *argv[])
 	MPI_Init(&argc, &argv);
 	MPI_Comm_rank(MPI_COMM_WORLD, &meu_ranque);
 	MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
-	MPI_Request pedido_recebe;
 
 	// Acrescentei tratamento para 0 e 1 serem aceitos e darem 0, mas valores negativos serem inválidos.
 
@@ -69,6 +68,7 @@ int main(int argc, char *argv[])
 	{
 		if (meu_ranque != 0)
 		{
+			// Processos enviam cont para o processo 0 e esperam o envio terminar para continuar (bloqueante)
 			MPI_Send(&cont, 1, MPI_INT, 0, etiq, MPI_COMM_WORLD);
 		}
 		else
@@ -76,8 +76,9 @@ int main(int argc, char *argv[])
 			total = cont;
 			for (int i = 1; i < num_procs; i++)
 			{
-				MPI_Irecv(&parcial, 1, MPI_INT, i, etiq, MPI_COMM_WORLD, &pedido_recebe);
-				MPI_Wait(&pedido_recebe, MPI_STATUS_IGNORE);
+				// Processo 0 recebe cont dos outros processos (bloqueante)
+				MPI_Recv(&parcial, 1, MPI_INT, i, etiq, MPI_COMM_WORLD, MPI_STATUS_IGNORE); 
+				// Poderia ser MPI_ANY_SOURCE no lugar do i
 				total += parcial;
 			}
 		}

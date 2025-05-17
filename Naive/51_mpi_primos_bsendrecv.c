@@ -18,9 +18,11 @@ int primo(long int n)
 int main(int argc, char *argv[])
 {
 	double t_inicial, t_final;
-	int cont = 0, total = 0;
+	int cont = 0, total = 0, parcial = 0, etiq = 0;
 	long int i, n;
 	int meu_ranque, num_procs, inicio, salto;
+	void *buffer;	// Buffer para o envio
+	int tam_buffer;	// Tamanho do buffer
 
 	if (argc < 2)
 	{
@@ -66,7 +68,27 @@ int main(int argc, char *argv[])
 
 	if (num_procs > 1)
 	{
-		MPI_Reduce(&cont, &total, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+		if (meu_ranque != 0)
+		{
+			MPI_Pack_size(1, MPI_INT, MPI_COMM_WORLD, &tam_buffer); // Calcula o tamanho do buffer
+			tam_buffer = tam_buffer + MPI_BSEND_OVERHEAD; // Adiciona o espaço extra exigido pelo MPI
+			buffer = (void *)malloc(tam_buffer);
+			// Anexa o buffer ao comunicador
+			MPI_Buffer_attach(buffer, tam_buffer);
+			/* Processos enviam cont para o processo 0 com buffer definido 
+			e continua executando (não bloqueante) */
+			MPI_Bsend(&cont, 1, MPI_INT, 0, etiq, MPI_COMM_WORLD); 
+		}
+		else
+		{
+			total = cont;
+			for (int i = 1; i < num_procs; i++)
+			{
+				// Processo 0 recebe cont dos outros processos (bloqueante)
+				MPI_Recv(&parcial, 1, MPI_INT, i, etiq, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+				total += parcial;
+			}
+		}
 	}
 	else
 	{

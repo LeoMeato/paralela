@@ -18,7 +18,7 @@ int primo(long int n)
 int main(int argc, char *argv[])
 {
 	double t_inicial, t_final;
-	int cont = 0, total = 0, parcial = 0, etiq = 0;
+	int cont = 0, total = 0;
 	long int i, n;
 	int meu_ranque, num_procs, inicio, salto;
 
@@ -35,7 +35,6 @@ int main(int argc, char *argv[])
 	MPI_Init(&argc, &argv);
 	MPI_Comm_rank(MPI_COMM_WORLD, &meu_ranque);
 	MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
-	MPI_Request pedido_recebe;
 
 	// Acrescentei tratamento para 0 e 1 serem aceitos e darem 0, mas valores negativos serem inválidos.
 
@@ -57,6 +56,7 @@ int main(int argc, char *argv[])
 	}
 
 	t_inicial = MPI_Wtime();
+	// O primeiro número considerado na contagem de primos é o 3 e o pulamos de 2 em 2 para não contar os pares
 	inicio = 3 + meu_ranque * 2;
 	salto = num_procs * 2;
 	for (i = inicio; i <= n; i += salto)
@@ -67,25 +67,8 @@ int main(int argc, char *argv[])
 
 	if (num_procs > 1)
 	{
-		if (meu_ranque != 0)
-		{
-			for (int i = 1; i < num_procs; i++)
-			{
-				MPI_Barrier(MPI_COMM_WORLD);
-				if (i == meu_ranque)
-					MPI_Rsend(&cont, 1, MPI_INT, 0, etiq, MPI_COMM_WORLD);
-			}
-		}
-		else
-		{
-			total = cont;
-			for (int i = 1; i < num_procs; i++)
-			{
-				MPI_Recv(&parcial, 1, MPI_INT, i, etiq, MPI_COMM_WORLD, MPI_STATUS_IGNORE); // DEADLOCK!!!! IMPOSSÍVEL RSEND COM RECV
-				MPI_Barrier(MPI_COMM_WORLD);
-				total += parcial;
-			}
-		}
+		// Processos enviam o valor de cont para o processo 0, que soma os valores e guarda em total
+		MPI_Reduce(&cont, &total, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 	}
 	else
 	{

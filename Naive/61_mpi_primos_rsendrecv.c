@@ -71,8 +71,11 @@ int main(int argc, char *argv[])
 		{
 			for (int i = 1; i < num_procs; i++)
 			{
+				// Barreira para sincronizar os processos
 				MPI_Barrier(MPI_COMM_WORLD);
 				if (i == meu_ranque)
+					/* Processos enviam cont para o processo 0 quando há um 
+					processo de recebimento ativo em 0 (bloqueante) */
 					MPI_Rsend(&cont, 1, MPI_INT, 0, etiq, MPI_COMM_WORLD);
 			}
 		}
@@ -81,9 +84,11 @@ int main(int argc, char *argv[])
 			total = cont;
 			for (int i = 1; i < num_procs; i++)
 			{
-				MPI_Irecv(&parcial, 1, MPI_INT, i, etiq, MPI_COMM_WORLD, &pedido_recebe);
+				// Processo 0 recebe cont dos outros processos (bloqueante)
+				MPI_Recv(&parcial, 1, MPI_INT, i, etiq, MPI_COMM_WORLD, MPI_STATUS_IGNORE); 
+				/* DEADLOCK!!!! Recv bloqueia o processo 0 que não executa a barreira, 
+				logo os outros processos não podem enviar */
 				MPI_Barrier(MPI_COMM_WORLD);
-				MPI_Wait(&pedido_recebe, MPI_STATUS_IGNORE);
 				total += parcial;
 			}
 		}
