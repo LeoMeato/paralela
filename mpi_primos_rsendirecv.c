@@ -22,7 +22,15 @@ int main(int argc, char *argv[])
 	long int i, n;
 	int meu_ranque, num_procs, inicio, salto;
 
-	n = strtol(argv[1], (char **)NULL, 10);
+	if (argc < 2)
+	{
+		printf("Valor inválido! Entre com um valor do maior inteiro\n");
+		return 0;
+	}
+	else
+	{
+		n = strtol(argv[1], (char **)NULL, 10);
+	}
 
 	MPI_Init(&argc, &argv);
 	MPI_Comm_rank(MPI_COMM_WORLD, &meu_ranque);
@@ -62,7 +70,12 @@ int main(int argc, char *argv[])
 	{
 		if (meu_ranque != 0)
 		{
-			MPI_Rsend(&cont, 1, MPI_INT, 0, etiq, MPI_COMM_WORLD); // FUNCIONA, MAS NÃO ERA PRA FUNCIONAR. INVESTIGAR.
+			for (int i = 1; i < num_procs; i++)
+			{
+				MPI_Barrier(MPI_COMM_WORLD);
+				if (i == meu_ranque)
+					MPI_Rsend(&cont, 1, MPI_INT, 0, etiq, MPI_COMM_WORLD);
+			}
 		}
 		else
 		{
@@ -70,6 +83,7 @@ int main(int argc, char *argv[])
 			for (int i = 1; i < num_procs; i++)
 			{
 				MPI_Irecv(&parcial, 1, MPI_INT, i, etiq, MPI_COMM_WORLD, &pedido_recebe);
+				MPI_Barrier(MPI_COMM_WORLD);
 				MPI_Wait(&pedido_recebe, MPI_STATUS_IGNORE);
 				total += parcial;
 			}
