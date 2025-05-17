@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
 			for (int i = 1; i < num_procs; i++)
 			{
 				/* Processo 0 pretende receber cont dos outros processos, 
-				mas continua executando (não é bloqueante) */
+				esperam o envio terminar para continuar (bloqueante) */
 				MPI_Irecv(&parcial, 1, MPI_INT, i, etiq, MPI_COMM_WORLD, &pedido_recebe);
 				// Bloqueia a execução até que a recepção esteja concluída pois precisa do valor de parcial
 				MPI_Wait(&pedido_recebe, MPI_STATUS_IGNORE);

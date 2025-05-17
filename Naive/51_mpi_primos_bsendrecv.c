@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
 			// Anexa o buffer ao comunicador
 			MPI_Buffer_attach(buffer, tam_buffer);
 			/* Processos enviam cont para o processo 0 com buffer definido 
-			e continua executando (não bloqueante) */
+			e esperam o envio terminar para continuar (bloqueante) */
 			MPI_Bsend(&cont, 1, MPI_INT, 0, etiq, MPI_COMM_WORLD); 
 		}
 		else
