@@ -67,22 +67,28 @@ int main(int argc, char *argv[])
     /* Envia pedaços com TAMANHO números para cada processo */
     if (meu_ranque == 0)
     {
+        /* Tirei a condição inicio < n para não deixar os processos desnecessários em starvation. 
+            Eles recebem um numero que sabem que é inútil e só retornam 0.*/
         for (dest = 1, inicio = 3; dest < num_procs; dest++, inicio += TAMANHO)
-        { // tirei a condição inicio < n para não deixar os processos desnecessários em starvation. Eles recebem um numero que sabem que é inútil e só retornam 0.
+        {   
+            // Processo 0 envia o início do espaço de busca para cada processo, que vai calcular de inicio a inicio + TAMANHO
             MPI_Send(&inicio, 1, MPI_INT, dest, tag, MPI_COMM_WORLD);
         }
         /* Fica recebendo as contagens parciais de cada processo */
         while (stop < (num_procs - 1))
         {
+            // Processo 0 recebe o resultado de cada processo
             MPI_Recv(&cont, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &estado);
             total += cont;
+            // Descobre o processo que enviou a contagem
             dest = estado.MPI_SOURCE;
             if (inicio > n)
             {
+                // Tag 99 para indicar que não há mais números a serem enviados
                 tag = 99;
                 stop++;
             }
-            /* Envia um nvo pedaço com TAMANHO números para o mesmo processo*/
+            /* Envia um novo pedaço com TAMANHO números para o mesmo processo*/
             MPI_Send(&inicio, 1, MPI_INT, dest, tag, MPI_COMM_WORLD);
             inicio += TAMANHO;
         }
@@ -92,10 +98,13 @@ int main(int argc, char *argv[])
         /* Cada processo escravo recebe o início do espaço de busca */
         while (estado.MPI_TAG != 99)
         {
+            // Processos recebem o início do espaço de busca que o processo 0 enviou
             MPI_Recv(&inicio, 1, MPI_INT, raiz, MPI_ANY_TAG, MPI_COMM_WORLD, &estado);
+            // Verifica se ainda há números a serem verificados
             if (estado.MPI_TAG != 99)
             {
-                for (i = inicio, cont = 0; i < (inicio + TAMANHO) && i <= n; i += 2) // mudei i < n para i <= n para incluir o número n também
+                // Mudei i < n para i <= n para incluir o número n também
+                for (i = inicio, cont = 0; i < (inicio + TAMANHO) && i <= n; i += 2) 
                     if (primo(i) == 1)
                         cont++;
                 /* Envia a contagem parcial para o processo mestre */

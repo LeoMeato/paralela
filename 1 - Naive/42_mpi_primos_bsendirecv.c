@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
 			// Anexa o buffer ao comunicador
 			MPI_Buffer_attach(buffer, tam_buffer);
 			/* Processos enviam cont para o processo 0 com buffer definido 
-			e continua executando (não bloqueante) */
+			e esperam o envio terminar para continuar (bloqueante) */
 			MPI_Bsend(&cont, 1, MPI_INT, 0, etiq, MPI_COMM_WORLD);
 		}
 		else
@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
 			for (int i = 1; i < num_procs; i++)
 			{
 				/* Processo 0 pretende receber cont dos outros processos, 
-				esperam o envio terminar para continuar (bloqueante) */
+				esperam o envio terminar para continuar (não é bloqueante) */
 				MPI_Irecv(&parcial, 1, MPI_INT, i, etiq, MPI_COMM_WORLD, &pedido_recebe);
 				// Bloqueia a execução até que a recepção esteja concluída pois precisa do valor de parcial
 				MPI_Wait(&pedido_recebe, MPI_STATUS_IGNORE);
